@@ -6,27 +6,44 @@ import VueRouter from "vue-router"
 import Login from '../views/login/Login'
 import Register from '../views/register/Register'
 import Home from '../views/home/Home'
+import Downloads from '../views/easypan/Downloads'
+import MyResources from '../views/easypan/MyResources'
+import RecycleBin from '../views/easypan/RecycleBin'
 import { Message } from "element-ui";
 
 // 创建并暴露一个路由器
 const router = new VueRouter({
-    mode: 'history',    // 路由模式，该模式不会在地址中显示井号#
+    mode: 'history',
     routes: [
         {
-            path: '/',          // 路径
-            redirect: '/login'  // 重定向
+            path: '/',
+            redirect: '/login'
         },
         {
-            path: '/login',     // 路径
-            component: Login    // 跳转到的组件
+            path: '/login',
+            component: Login
         },
         {
-            path: '/register',     // 路径
-            component: Register    // 跳转到的组件
+            path: '/register',
+            component: Register
         },
         {
-            path: '/home',     // 路径
-            component: Home    // 跳转到的组件
+            path: '/home',
+            component: Home,
+            children: [
+                {
+                    path: 'myResources',
+                    component: MyResources
+                },
+                {
+                    path: 'downloads',
+                    component: Downloads
+                },
+                {
+                    path: 'recycleBin',
+                    component: RecycleBin
+                }
+            ]
         }
     ]
 })
