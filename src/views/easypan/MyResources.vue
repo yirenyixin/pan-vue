@@ -30,10 +30,10 @@
       </div>
       <el-button @click="startUpload">开始上传</el-button>
     </el-dialog>
-    <el-dialog title="下载文件" :visible.sync="downloadDialogVisible">
-      <el-input v-model="downloadPath" placeholder="输入下载路径"></el-input>
-      <el-button @click="startDownload">开始下载</el-button>
-    </el-dialog>
+<!--    <el-dialog title="下载文件" :visible.sync="downloadDialogVisible">-->
+<!--      <el-input v-model="downloadPath" placeholder="输入下载路径"></el-input>-->
+<!--      <el-button @click="startDownload">开始下载</el-button>-->
+<!--    </el-dialog>-->
 
 
   </div>
@@ -167,10 +167,20 @@ export default {
       });
     },
     fetchData() {
+      // 从sessionStorage获取用户信息
+      const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+      const uname = userInfo.uname; // 假设用户信息中有username字段
+
+      console.log(uname);
       this.axios
-          .post('/api/path/get')
+          .post('/api/path/get', { uname: uname }, {
+            headers: {
+              'Content-Type': 'application/json' // 设置请求头
+            }
+          })
           .then(response => {
-            this.initializeExpandState(response.data[0]);
+            this.initializeExpandState(response.data);
+            console.log(response.data)
           })
           .catch(error => {
             console.error('获取目录树数据失败', error);
@@ -178,46 +188,6 @@ export default {
     },
     showAddFolderDialog() {
       this.dialogVisible = true;
-    },
-    download() {
-      if (this.selectedItems.length === 0) {
-        this.$message({
-          type: 'warning',
-          message: '请先选择要下载的文件或文件夹'
-        });
-        return;
-      }
-
-      this.$confirm('确认下载已选择的文件或文件夹吗？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        const pathsToDownload = this.selectedItems.map(item => {
-          const pathSegments = [];
-          let folder = item;
-          while (folder) {
-            if (folder.save_path) {
-              pathSegments.unshift(folder.save_path);
-            }
-            folder = folder.parent;
-          }
-          return pathSegments.join('/');
-        });
-
-        this.axios
-            .post('/api/path/download', pathsToDownload)
-            .then(response => {
-              // 处理删除成功后的逻辑，例如重新加载数据或更新视图
-              this.fetchData();
-              this.selectedItems = [];
-            })
-            .catch(error => {
-              console.error('删除文件或文件夹失败', error);
-            });
-      }).catch(() => {
-        // 用户取消删除操作
-      });
     },
     showUploadDialog() {
       this.uploadDialogVisible = true;
@@ -295,7 +265,7 @@ export default {
       }
 
       const pathsToDownload = this.selectedItems
-          .filter(item => !item.save_path.endsWith('/')) // 过滤掉最后一个字符为"/"的路径
+          .filter(item => !item.save_path.endsWith('/'))
           .map(item => {
             const pathSegments = [];
             let folder = item;
@@ -307,16 +277,16 @@ export default {
             }
             return pathSegments.join('/');
           });
-      console.log(pathsToDownload);
+
       // 向服务器发送下载请求，将选择的文件路径发送给服务器
       await this.axios
-          .post('/api/path/download', {
-            paths: pathsToDownload
-          })
+          .post('/api/path/download', pathsToDownload)
           .then(response => {
-            // 处理下载请求返回的数据，例如获取下载链接等
-            // 在浏览器中打开下载链接，浏览器会自动进行下载
-            window.open(response.data.downloadUrl, '_blank');
+            const downloadUrls = response.data.downloadUrls; // 获取服务器返回的下载链接列表
+            console.log(downloadUrls);
+            downloadUrls.forEach(downloadUrl => {
+              window.open(downloadUrl, '_blank'); // 在新窗口中打开下载链接
+            });
           })
           .catch(error => {
             console.error('下载文件失败', error);
