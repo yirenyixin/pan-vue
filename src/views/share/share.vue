@@ -2,6 +2,7 @@
   <div class="share">
     <el-input v-model="pwd" class="share-input" placeholder="请输入密码" />
     <el-button @click="confirmPassword">确定</el-button>
+
     <el-dialog
         title="目录树"
         :visible.sync="dialogVisible"
@@ -9,16 +10,21 @@
         :before-close="handleDialogClose"
     >
       <div>
-        <el-tree
-            :data="directoryTree"
-            :props="treeProps"
-            show-checkbox
-            default-expand-all
-        ></el-tree>
+        <span class="current-path">{{ getCurrentPath }}</span>
+        <el-button @click="goBack" :disabled="isTopLevel">返回</el-button>
+        <ul>
+          <li v-for="item in currentFolder.children" :key="item.save_path">
+<!--            <input type="checkbox" @change="handleCheckboxChange(item)">-->
+<!--            <label v-if="!item.save_path.includes('/')">-->
+<!--              {{ item.save_path }}-->
+<!--            </label>-->
+            <span v-if="item.children" @click="handleItemClick(item)">{{ item.save_path }}</span>
+          </li>
+        </ul>
+        <el-button @click="saveToPath">保存到此路径</el-button>
       </div>
     </el-dialog>
   </div>
-
 </template>
 
 <script>
@@ -32,13 +38,59 @@ export default {
       currentFolder: {},
       selectedItems: [],
       dialogVisible: false,
-      treeProps: {
-        label: "name", // 假设目录树节点的名称字段为name
-        children: "children", // 假设目录树的子节点字段为children
-      },
     };
   },
+  computed: {
+    isTopLevel() {
+      return this.currentFolder === this.directoryTree;
+    },
+    getCurrentPath() {
+      const pathSegments = [];
+      let folder = this.currentFolder;
+      while (folder) {
+        if (folder.save_path) {
+          pathSegments.unshift(folder.save_path);
+        }
+        folder = folder.parent;
+      }
+      return pathSegments.join('/');
+    }
+  },
   methods: {
+    goBack() {
+      if (this.currentFolder.parent) {
+        this.currentFolder = this.currentFolder.parent;
+        this.selectedItems = [];
+      }
+    },
+    handleItemClick(item) {
+      if (item.children) {
+        this.currentFolder = item;
+        this.selectedItems = [];
+      }
+    },
+    handleCheckboxChange(item) {
+      if (this.isSelected(item)) {
+        this.selectedItems = this.selectedItems.filter(selectedItem => selectedItem !== item);
+      } else {
+        this.selectedItems.push(item);
+      }
+      this.printSelectedPaths();
+    },
+    printSelectedPaths() {
+      const selectedPaths = this.selectedItems.map(item => {
+        const pathSegments = [];
+        let folder = item;
+        while (folder) {
+          if (folder.save_path) {
+            pathSegments.unshift(folder.save_path);
+          }
+          folder = folder.parent;
+        }
+        return pathSegments.join('/');
+      });
+      console.log('Selected Paths:', selectedPaths);
+    },
     initializeExpandState(folder) {
       this.directoryTree = folder;
       this.currentFolder = folder;
@@ -77,7 +129,7 @@ export default {
 
             console.log(uname);
             this.axios
-                .post('/api/path/get', { uname: uname }, {
+                .post('/api/path/getfile', { uname: uname }, {
                   headers: {
                     'Content-Type': 'application/json' // 设置请求头
                   }
@@ -108,6 +160,35 @@ export default {
       // 可以根据需要重置其他数据或执行其他操作
       done();
     },
+    //保存文件
+    async saveToPath() {
+      // 构造要发送给后端的数据
+      const dataToSend = {
+        currentPath: this.getCurrentPath,
+        currentRoute: this.currentRoute
+      };
+
+      try {
+        const response = await this.axios.post('/api/share/savePath', dataToSend);  // 将接口路径和数据替换为实际情况
+        if (response.data.success) {
+          this.$message({
+            type: 'success',
+            message: '已成功保存到此路径'
+          });
+        } else {
+          this.$message({
+            type: 'error',
+            message: '保存失败，请重试'
+          });
+        }
+      } catch (error) {
+        console.error('保存失败', error);
+        this.$message({
+          type: 'error',
+          message: '保存失败，请重试'
+        });
+      }
+    }
   },
   mounted() {
     // 使用Vue Router获取当前页面的URL

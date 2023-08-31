@@ -45,9 +45,9 @@
 export default {
   data() {
     return {
-      directoryTree: {},
-      currentFolder: {},
-      selectedItems: [],
+      directoryTree: {},//目录树
+      currentFolder: {},//当前文件目录
+      selectedItems: [],//复选框选择的文件目录
       dialogVisible: false,
       newFolderName: '',
       uploadFile: null,
@@ -127,6 +127,8 @@ export default {
       });
       console.log('Selected Paths:', selectedPaths);
     },
+
+
     showDeleteDialog() {
       if (this.selectedItems.length === 0) {
         this.$message({
