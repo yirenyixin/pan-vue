@@ -8,6 +8,7 @@
       <input type="file" ref="fileInput" style="display: none" @change="handleFileChange" />
       <el-button class="action-button" @click="showUploadDialog">上传</el-button>
       <el-button class="action-button" @click="startDownload">下载</el-button>
+      <el-button class="action-button" @click="shareFiles">分享</el-button>
     </div>
     <ul>
       <li v-for="item in currentFolder.children" :key="item.save_path">
@@ -254,7 +255,77 @@ export default {
       this.uploadDialogVisible = false;
       this.fetchData();
     },
-    // 文件下载
+// 文件下载
+//     async startDownload() {
+//       if (this.selectedItems.length === 0) {
+//         this.$message({
+//           type: 'warning',
+//           message: '请先选择要下载的文件',
+//         });
+//         return;
+//       }
+//
+//       const pathsToDownload = this.selectedItems
+//           .filter(item => !item.save_path.endsWith('/'))
+//           .map(item => {
+//             const pathSegments = [];
+//             let folder = item;
+//             while (folder) {
+//               if (folder.save_path) {
+//                 pathSegments.unshift(folder.save_path);
+//               }
+//               folder = folder.parent;
+//             }
+//             return pathSegments.join('/');
+//           });
+//
+//       for (const path of pathsToDownload) {
+//         await this.downloadFileWithResume(path);
+//       }
+//     },
+//
+//     async downloadFileWithResume(path) {
+//       try {
+//         const downloadedBytes = await this.getDownloadedBytes(path);
+//         // const response = await this.axios.get(`/api/path/download/${encodeURIComponent(path.replace(/\/\//g, '/'))}`, {
+//         const response = await this.axios.get(`/api/path/download/${path}`, {
+//           responseType: 'blob',
+//           headers: {
+//             Range: `bytes=${downloadedBytes}-`,
+//           },
+//         });
+//
+//         if (response.status === 206) { // Partial Content
+//           const blob = response.data;
+//           const downloadUrl = URL.createObjectURL(blob);
+//           const link = document.createElement('a');
+//           link.href = downloadUrl;
+//           link.download = path.split('/').pop();
+//           link.click();
+//           URL.revokeObjectURL(downloadUrl);
+//         }
+//       } catch (error) {
+//         console.error('下载文件失败', error);
+//       }
+//     },
+//
+//     async getDownloadedBytes(path) {
+//       try {
+//         // const response = await this.axios.head(`/api/path/download/${encodeURIComponent(path.replace(/\/\//g, '/'))}`);
+//         const response = await this.axios.head(`/api/path/download/${path}`);
+//         const contentRange = response.headers['content-range'];
+//         if (contentRange) {
+//           const [, end] = contentRange.match(/\/(\d+)$/);
+//           return parseInt(end, 10) + 1;
+//         }
+//       } catch (error) {
+//         console.error('获取已下载字节数失败', error);
+//       }
+//       return 0;
+//     },
+
+
+// // 文件下载
     async startDownload() {
       if (this.selectedItems.length === 0) {
         this.$message({
@@ -291,6 +362,47 @@ export default {
           .catch(error => {
             console.error('下载文件失败', error);
           });
+    },
+    //文件分享
+    async shareFiles() {
+      if (this.selectedItems.length === 0) {
+        this.$message({
+          type: 'warning',
+          message: '请先选择要分享的文件或文件夹'
+        });
+        return;
+      }
+
+      const pathsToShare = this.selectedItems
+          .map(item => {
+            const pathSegments = [];
+            let folder = item;
+            while (folder) {
+              if (folder.save_path) {
+                pathSegments.unshift(folder.save_path);
+              }
+              folder = folder.parent;
+            }
+            return pathSegments.join('/');
+          });
+
+      // 向服务器发送分享请求，将选择的文件路径发送给服务器
+      try {
+        console.log(pathsToShare);
+        const response = await this.axios.post('/api/path/share', pathsToShare);
+        const { shareLink, sharePassword } = response.data; // 从服务器响应中获取分享链接和密码
+
+        // 将分享链接和密码呈现给用户，可以使用弹窗、通知等方式
+        this.$message({
+          type: 'success',
+          message: `分享链接：${shareLink}\n分享密码：${sharePassword}`
+        });
+
+        // 清空选中的项目
+        this.selectedItems = [];
+      } catch (error) {
+        console.error('分享文件失败', error);
+      }
     },
     //新增文件夹
     saveNewFolder() {

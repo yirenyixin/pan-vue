@@ -9,12 +9,18 @@ import Home from '../views/home/Home'
 import Downloads from '../views/easypan/Downloads'
 import MyResources from '../views/easypan/MyResources'
 import RecycleBin from '../views/easypan/RecycleBin'
+import Share from '../views/share/share'
 import { Message } from "element-ui";
+
 
 // 创建并暴露一个路由器
 const router = new VueRouter({
     mode: 'history',
     routes: [
+        {
+            path: '*',
+            component: Share // 这是一个自定义的组件，可以用于显示404页面，也可以直接重定向到其他页面
+        },
         {
             path: '/',
             redirect: '/login'
