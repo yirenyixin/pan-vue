@@ -389,7 +389,7 @@ export default {
       // 向服务器发送分享请求，将选择的文件路径发送给服务器
       try {
         console.log(pathsToShare);
-        const response = await this.axios.post('/api/path/share', pathsToShare);
+        const response = await this.axios.post('/api/share/shareUrl', pathsToShare);
         const { shareLink, sharePassword } = response.data; // 从服务器响应中获取分享链接和密码
 
         // 将分享链接和密码呈现给用户，可以使用弹窗、通知等方式
