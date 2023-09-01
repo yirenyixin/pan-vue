@@ -342,19 +342,25 @@ export default {
         });
         return;
       }
-      const pathsToDownload = this.selectedItems
-          .filter(item => !item.save_path.endsWith('/'))
-          .map(item => {
-            const pathSegments = [];
-            let folder = item;
-            while (folder) {
-              if (folder.save_path) {
-                pathSegments.unshift(folder.save_path);
-              }
-              folder = folder.parent;
-            }
-            return pathSegments.join('/');
+
+      const pathsToDownload = this.selectedItems.map(item => {
+        if (item.save_path.endsWith('/')) {
+          this.$message({
+            type: 'warning',
+            message: '不能下载文件夹'
           });
+          return null;
+        }
+        const pathSegments = [];
+        let folder = item;
+        while (folder) {
+          if (folder.save_path) {
+            pathSegments.unshift(folder.save_path);
+          }
+          folder = folder.parent;
+        }
+        return pathSegments.join('/');
+      });
 
       // 向服务器发送下载请求，将选择的文件路径发送给服务器
       await this.axios
