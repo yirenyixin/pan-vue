@@ -335,8 +335,13 @@ export default {
           message: '请先选择要下载的文件'
         });
         return;
+      }else if (this.selectedItems.length > 1) {
+        this.$message({
+          type: 'warning',
+          message: '一次只能选择一个文件下载'
+        });
+        return;
       }
-
       const pathsToDownload = this.selectedItems
           .filter(item => !item.save_path.endsWith('/'))
           .map(item => {
@@ -371,6 +376,12 @@ export default {
         this.$message({
           type: 'warning',
           message: '请先选择要分享的文件或文件夹'
+        });
+        return;
+      }else if (this.selectedItems.length > 1) {
+        this.$message({
+          type: 'warning',
+          message: '一次只能选择一个文件或一个文件夹分享'
         });
         return;
       }

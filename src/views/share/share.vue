@@ -14,14 +14,10 @@
         <el-button @click="goBack" :disabled="isTopLevel">返回</el-button>
         <ul>
           <li v-for="item in currentFolder.children" :key="item.save_path">
-<!--            <input type="checkbox" @change="handleCheckboxChange(item)">-->
-<!--            <label v-if="!item.save_path.includes('/')">-->
-<!--              {{ item.save_path }}-->
-<!--            </label>-->
             <span v-if="item.children" @click="handleItemClick(item)">{{ item.save_path }}</span>
           </li>
         </ul>
-        <el-button @click="saveToPath">保存到此路径</el-button>
+        <el-button @click="saveToPath" :loading="isLoading">保存到此路径</el-button>
       </div>
     </el-dialog>
   </div>
@@ -32,12 +28,12 @@
 export default {
   data() {
     return {
-      currentRoute: "",
-      pwd: "",
-      directoryTree: {},
-      currentFolder: {},
-      selectedItems: [],
+      currentRoute: "",//分享唯一id
+      pwd: "",//分享密码
+      directoryTree: {},//文件树
+      currentFolder: {},//当前选择路径
       dialogVisible: false,
+      isLoading: false,
     };
   },
   computed: {
@@ -60,36 +56,12 @@ export default {
     goBack() {
       if (this.currentFolder.parent) {
         this.currentFolder = this.currentFolder.parent;
-        this.selectedItems = [];
       }
     },
     handleItemClick(item) {
       if (item.children) {
         this.currentFolder = item;
-        this.selectedItems = [];
       }
-    },
-    handleCheckboxChange(item) {
-      if (this.isSelected(item)) {
-        this.selectedItems = this.selectedItems.filter(selectedItem => selectedItem !== item);
-      } else {
-        this.selectedItems.push(item);
-      }
-      this.printSelectedPaths();
-    },
-    printSelectedPaths() {
-      const selectedPaths = this.selectedItems.map(item => {
-        const pathSegments = [];
-        let folder = item;
-        while (folder) {
-          if (folder.save_path) {
-            pathSegments.unshift(folder.save_path);
-          }
-          folder = folder.parent;
-        }
-        return pathSegments.join('/');
-      });
-      console.log('Selected Paths:', selectedPaths);
     },
     initializeExpandState(folder) {
       this.directoryTree = folder;
@@ -162,6 +134,9 @@ export default {
     },
     //保存文件
     async saveToPath() {
+      // 开始加载动画
+      this.isLoading = true;
+
       // 构造要发送给后端的数据
       const dataToSend = {
         currentPath: this.getCurrentPath,
@@ -187,6 +162,9 @@ export default {
           type: 'error',
           message: '保存失败，请重试'
         });
+      } finally {
+        // 结束加载动画
+        this.isLoading = false;
       }
     }
   },
