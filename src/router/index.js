@@ -19,7 +19,7 @@ const router = new VueRouter({
     routes: [
         {
             path: '*',
-            component: Share // 这是一个自定义的组件，可以用于显示404页面，也可以直接重定向到其他页面
+            component: Share // 这里偷懒把没有路由的网页直接转到分享页面
         },
         {
             path: '/',
