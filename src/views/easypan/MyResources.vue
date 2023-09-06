@@ -32,13 +32,16 @@
       <el-button @click="startUpload">开始上传</el-button>
     </el-dialog>
     <el-dialog title="在线预览图片"  :visible.sync="imgDialogVisible">
-      <img :src="imageSrc" alt="图片预览" />
+      <div>
+        <img :src="imageSrc" alt="图片预览" />
+      </div>
+      <div>
       <el-button @click="imgClose">关闭</el-button>
+      </div>
     </el-dialog>
     <el-dialog title="视频在线预览" :visible.sync="videoDialogVisible">
       <video controls style="max-width: 100%; height: auto;">
         <source :src="videoSrc" type="video/mp4">
-        <el-button @click="videoClose">关闭</el-button>
       </video>
     </el-dialog>
 
@@ -139,9 +142,6 @@ export default {
     },
     imgClose() {
       this.imgDialogVisible = false;
-    },
-    videoClose(){
-      this.videoDialogVisible=false;
     },
     goBack() {
       if (this.currentFolder.parent) {
