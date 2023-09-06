@@ -33,8 +33,6 @@ npm run serve
 
 ## 网盘前端代码
 
-个人后端写的比较多前端能用就行，所以前端写的比较简单。
-
 后端代码链接: https://github.com/yirenyixin/pan
 
 ## 实现的功能

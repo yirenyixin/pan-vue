@@ -2,7 +2,7 @@
   <div>
     <div class="button-group">
       <el-button @click="goBack" :disabled="isTopLevel">返回</el-button>
-      <span class="current-path">{{ getCurrentPath }}</span>
+      <span class="current-path" >{{ getCurrentPath }}</span>
       <el-button class="action-button" @click="showAddFolderDialog">新增文件夹</el-button>
       <el-button class="action-button" @click="showDeleteDialog">删除</el-button>
       <input type="file" ref="fileInput" style="display: none" @change="handleFileChange" />
@@ -13,7 +13,7 @@
     <ul>
       <li v-for="item in currentFolder.children" :key="item.save_path">
         <input type="checkbox" @change="handleCheckboxChange(item)">
-        <label v-if="!item.save_path.includes('/')">
+        <label v-if="!item.save_path.includes('/')" @click="preView(item.save_path)">
           {{ item.save_path }}
         </label>
         <span v-if="item.children" @click="handleItemClick(item)">{{ item.save_path }}</span>
@@ -31,11 +31,16 @@
       </div>
       <el-button @click="startUpload">开始上传</el-button>
     </el-dialog>
-<!--    <el-dialog title="下载文件" :visible.sync="downloadDialogVisible">-->
-<!--      <el-input v-model="downloadPath" placeholder="输入下载路径"></el-input>-->
-<!--      <el-button @click="startDownload">开始下载</el-button>-->
-<!--    </el-dialog>-->
-
+    <el-dialog title="在线预览图片"  :visible.sync="imgDialogVisible">
+      <img :src="imageSrc" alt="图片预览" />
+      <el-button @click="imgClose">关闭</el-button>
+    </el-dialog>
+    <el-dialog title="视频在线预览" :visible.sync="videoDialogVisible">
+      <video controls style="max-width: 100%; height: auto;">
+        <source :src="videoSrc" type="video/mp4">
+        <el-button @click="videoClose">关闭</el-button>
+      </video>
+    </el-dialog>
 
   </div>
 </template>
@@ -57,7 +62,12 @@ export default {
       downloadDialogVisible: false,
       downloadPath: "", // 用户输入的下载路径
       downloadUrl: "", // 下载链接
-      downloading: false // 是否正在下载
+      downloading: false, // 是否正在下载
+      imgDialogVisible:false,//图片预览
+      preViewPath:"",//预览路径
+      imageSrc: '', // 用于绑定图片预览的数据属性
+      videoDialogVisible:false,//视频预览
+      videoSrc:'',
     };
   },
   computed: {
@@ -95,6 +105,43 @@ export default {
         this.currentFolder = item;
         this.selectedItems = [];
       }
+    },
+    async preView(fileName) {
+      const pathSegments = [];
+      let folder = this.currentFolder;
+      while (folder) {
+        if (folder.save_path) {
+          pathSegments.unshift(folder.save_path);
+        }
+        folder = folder.parent;
+      }
+      const pathsTopreView = [pathSegments.join('/') + "/" + fileName];
+      console.log(pathsTopreView);
+      let url="";
+      //向服务器发送下载请求，将选择的文件路径发送给服务器
+      await this.axios
+          .post('/api/path/preView', pathsTopreView)
+          .then(response => {
+            const preViewUrls = response.data.preViewUrls; // 获取服务器返回的下载链接列表
+            console.log(preViewUrls);
+            url=preViewUrls[0];
+          })
+          .catch(error => {
+            console.error('下载预览失败', error);
+          });
+      if (fileName.includes(".png")||fileName.includes(".jpg")) {
+        this.imageSrc=url;
+        this.imgDialogVisible = true; // 打开对话框
+      }else if(fileName.includes(".mp4")){
+        this.videoSrc=url;
+        this.videoDialogVisible=true;
+      }
+    },
+    imgClose() {
+      this.imgDialogVisible = false;
+    },
+    videoClose(){
+      this.videoDialogVisible=false;
     },
     goBack() {
       if (this.currentFolder.parent) {
@@ -361,7 +408,7 @@ export default {
         }
         return pathSegments.join('/');
       });
-
+      console.log(pathsToDownload);
       // 向服务器发送下载请求，将选择的文件路径发送给服务器
       await this.axios
           .post('/api/path/download', pathsToDownload)
