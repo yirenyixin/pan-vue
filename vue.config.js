@@ -2,6 +2,7 @@ module.exports = {
     lintOnSave: false, // 关闭语法检测
     // 开启代理服务器
     devServer: {
+        port:8080,//修改访问端口
         // 代理服务器可以将路由中的指定前缀转发到指定的后端服务器中
         proxy: {
             '/api': {
